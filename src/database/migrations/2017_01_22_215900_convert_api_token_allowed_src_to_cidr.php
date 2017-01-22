@@ -20,46 +20,42 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-namespace Seat\Api\Models;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-use Illuminate\Database\Eloquent\Model;
-
-/**
- * Class ApiToken.
- * @package Seat\Api\Models
- */
-class ApiToken extends Model
+class ConvertApiTokenAllowedSrcToCidr extends Migration
 {
     /**
-     * @var array
-     */
-    protected $fillable = ['token', 'allowed_src', 'comment'];
-
-    protected $casts = ['allowed_src' => 'array'];
-
-    /**
-     * Make sure we cleanup logs on delete.
+     * Run the migrations.
      *
-     * @return bool|null
-     * @throws \Exception
+     * @return void
      */
-    public function delete()
+    public function up()
     {
 
-        // Cleanup the user
-        $this->logs()->delete();
+        if (Schema::hasTable('api_tokens')) {
+            $tokens = DB::table('api_tokens')->all();
+            if ($tokens != null) {
+                foreach ($tokens as $token) {
+                    $oldValue = $token->allowed_src;
+                    $newValue = json_encode([$oldValue]);
 
-        return parent::delete();
+                    DB::table('api_tokens')->where('id', $token->id)
+                        ->update(['allowed_src', $newValue]);
+                }
+            }
+        }
     }
 
     /**
-     * Return the logs for a token.
+     * Reverse the migrations.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return void
      */
-    public function logs()
+    public function down()
     {
 
-        return $this->hasMany(ApiTokenLog::class);
+
     }
 }

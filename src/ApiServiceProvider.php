@@ -23,6 +23,7 @@
 namespace Seat\Api;
 
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Seat\Api\Http\Middleware\ApiToken;
 
@@ -104,6 +105,11 @@ class ApiServiceProvider extends ServiceProvider
     {
 
         $this->loadTranslationsFrom(__DIR__ . '/lang', 'api');
+    }
+
+    public function add_custom_validators()
+    {
+        Validator::extend('cidr', 'Seat\Api\Http\Validation\Custom\Cidr@validate');
     }
 
     /**

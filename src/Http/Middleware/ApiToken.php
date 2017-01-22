@@ -24,6 +24,8 @@ namespace Seat\Api\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use IPTools\IP;
+use IPTools\Range;
 use Seat\Api\Models\ApiToken as ApiTokenModel;
 use Seat\Api\Models\ApiTokenLog;
 
@@ -63,12 +65,20 @@ class ApiToken
      *
      * @return mixed
      */
-    public function valid_token_ip(Request $request)
+    public function valid_token_ip(Request $request) : bool
     {
+        $token = ApiTokenModel::where('token', $request->header('X-Token'))->first();
 
-        return ApiTokenModel::where('token', $request->header('X-Token'))
-            ->where('allowed_src', $request->getClientIp())
-            ->first();
+        if ($token != null) {
+            $allowedIp = json_decode($token->allowed_src);
+            foreach ($allowedIp as $allowed) {
+                if (Range::parse($allowed)->contains(new IP($request->getClientIp()))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
